@@ -1,17 +1,27 @@
 defmodule Pke.Encrypter do
+  use GenServer
   @encryption_algorithm Application.get_env(:pke, :encryption_algorithm)
 
-  def init(data, pid) do
-    send(pid, {self, start(data)})
+  def start_link(data) do
+    GenServer.start_link(__MODULE__, data)
   end
 
-  def start(data) do
-    encrypt_message(data)
+  def signed_message(pid) do
+    GenServer.call(pid, :signed_message)
+  end
+
+  def init(data) do
+    signed_message = encrypt_message(data)
     |> attach_signature(data)
+    {:ok, signed_message}
+  end
+
+  def handle_call(:signed_message, _from, signed_message) do
+    {:reply, {:ok, signed_message}, signed_message}
   end
 
   def encrypt_message(data) do
-    %{data: data, session_key: Pke.Keys.generate_session_key}
+    %{data: data, session_key: Pke.Keys.session_key}
     |> encrypt_data
     |> encrypt_session_key
   end
