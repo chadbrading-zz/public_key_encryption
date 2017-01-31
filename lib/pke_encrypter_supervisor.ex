@@ -6,10 +6,11 @@ defmodule Pke.Encrypter.Supervisor do
   end
 
   def init([]) do
-    {:ok,
-      {{:simple_one_for_one, 3, 5},
-        [{Pke.Encrypter, {Pke.Encrypter, :start_link, []}, :permanent, 5000,
-          :worker, [Pke.Encrypter]}]}}
+    children = [
+      worker(Pke.Encrypter, [])
+    ]
+    opts = [strategy: :simple_one_for_one, name: __MODULE__]
+    supervise(children, opts)
   end
 
   def start_child(data) do
